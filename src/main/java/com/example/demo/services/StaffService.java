@@ -29,42 +29,51 @@ public class StaffService {
 
        for(Complaint savedComplaint:complaints)
        {
-       ComplaintResponse complaintResponse = new ComplaintResponse();
-       complaintResponse.setComplaintId(savedComplaint.getComplaintId());
-       complaintResponse.setCategory(savedComplaint.getCategory());
-       complaintResponse.setDescription(savedComplaint.getDescription());
-       complaintResponse.setStatus(savedComplaint.getStatus());
-       complaintResponse.setSubmissionDate(savedComplaint.getCreatedAt());
-       complaintResponse.setExpectedResolutionDate(savedComplaint.getExpectedResolutionDate());
-       complaintResponse.setId(savedComplaint.getId());
-       responseList.add(complaintResponse);
+           ComplaintResponse complaintResponse = ComplaintResponse.builder()
+               .referenceNumber(savedComplaint.getReferenceNumber())
+               .bookingId(savedComplaint.getBooking() != null ? savedComplaint.getBooking().getId() : null)
+               .title(savedComplaint.getTitle())
+               .description(savedComplaint.getDescription())
+               .category(savedComplaint.getCategory())
+               .contactPreference(savedComplaint.getContactPreference())
+               .status(savedComplaint.getStatus())
+               .priority(savedComplaint.getPriority())
+               .expectedResolutionDate(savedComplaint.getExpectedResolutionDate())
+               .createdAt(savedComplaint.getCreatedAt())
+               .updatedAt(savedComplaint.getUpdatedAt())
+               .build();
+           responseList.add(complaintResponse);
        }
-       
+
        return responseList;
-    
+
     }
 
 
     public ComplaintResponse updateComplaintStatus(Long compalintId, ComplaintStatus status,Long staffId){
        Complaint complaint= complaintRepository.findById(compalintId)
         .orElseThrow(()->new RuntimeException("comaplint not found"));
-        
+
      if(complaint.getAssignedStaff()==null||!complaint.getAssignedStaff().getId().equals(staffId)){
         throw new RuntimeException("access denied");
      }
-     
+
      complaint.setStatus(status);
-     complaint.setUpdatedAt(LocalDateTime.now());
      Complaint savedComplaint = complaintRepository.save(complaint);
-     ComplaintResponse complaintResponse = new ComplaintResponse();
-       complaintResponse.setComplaintId(savedComplaint.getComplaintId());
-       complaintResponse.setCategory(savedComplaint.getCategory());
-       complaintResponse.setDescription(savedComplaint.getDescription());
-       complaintResponse.setStatus(savedComplaint.getStatus());
-       complaintResponse.setSubmissionDate(savedComplaint.getCreatedAt());
-       complaintResponse.setExpectedResolutionDate(savedComplaint.getExpectedResolutionDate());
-       complaintResponse.setId(savedComplaint.getId());
-        return complaintResponse;
+     ComplaintResponse complaintResponse = ComplaintResponse.builder()
+         .referenceNumber(savedComplaint.getReferenceNumber())
+         .bookingId(savedComplaint.getBooking() != null ? savedComplaint.getBooking().getId() : null)
+         .title(savedComplaint.getTitle())
+         .description(savedComplaint.getDescription())
+         .category(savedComplaint.getCategory())
+         .contactPreference(savedComplaint.getContactPreference())
+         .status(savedComplaint.getStatus())
+         .priority(savedComplaint.getPriority())
+         .expectedResolutionDate(savedComplaint.getExpectedResolutionDate())
+         .createdAt(savedComplaint.getCreatedAt())
+         .updatedAt(savedComplaint.getUpdatedAt())
+         .build();
+      return complaintResponse;
     }
 
 

@@ -186,13 +186,13 @@ public class AdminService {
            room.setPricePerNight(request.getPricePerNight());
         }
         room.setUpdatedAt(LocalDateTime.now());
-       
+
         if(request.getStatus()!=null){
              room.setStatus(request.getStatus());
         }
-        
-       
-        
+
+
+
 
         return roomRepository.save(room);
     }
@@ -574,7 +574,6 @@ public class AdminService {
 
         complaint.setAssignedStaff(staff);
         complaint.setStatus(ComplaintStatus.IN_PROGRESS);
-        complaint.setUpdatedAt(LocalDateTime.now());
         complaintRepository.save(complaint);
     }
 
@@ -584,7 +583,6 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
         complaint.setStatus(status);
-        complaint.setUpdatedAt(LocalDateTime.now());
 
         complaintRepository.save(complaint);
     }

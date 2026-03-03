@@ -3,27 +3,30 @@ import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestParam;
 import com.example.demo.models.User;
-import com.example.demo.enums.*;
 import com.example.demo.enums.ComplaintStatus;
 import com.example.demo.models.Complaint;
 import com.example.demo.models.ComplaintAction;
 import com.example.demo.models.Staff;
 import com.example.demo.models.Booking;
-import com.example.demo.dto.*;
+import com.example.demo.dto.ComplaintRequest;
+import com.example.demo.dto.ComplaintUpdateRequest;
+import com.example.demo.dto.ComplaintResponse;
+import com.example.demo.dto.ComplaintActionRequest;
+import com.example.demo.globalException.ComplaintNotFoundException;
+import com.example.demo.globalException.InvalidComplaintStateException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.repository.ComplaintActionRepository;
 import com.example.demo.repository.ComplaintRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.BookingRepository;
 import com.example.demo.repository.StaffRepository;
-import lombok.*;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
@@ -31,50 +34,86 @@ public class ComplaintService {
     private final UserRepository userRepository;
     private final StaffRepository staffRepository;
     private final BookingRepository bookingRepository;
+    private final ReferenceGeneratorService referenceGeneratorService;
 
-    ComplaintService(ComplaintRepository complaintRepository,ComplaintActionRepository complaintActionRepository,UserRepository userRepository,StaffRepository staffRepository,BookingRepository bookingRepository){
-        this.complaintRepository = complaintRepository;
-        this.complaintActionRepository=complaintActionRepository;
-        this.userRepository=userRepository;
-        this.staffRepository=staffRepository;
-        this.bookingRepository=bookingRepository;
-    }
-
-
-public ComplaintResponse createComplaint(ComplaintRequest complaintRequest, Long userId) {
+    @Transactional
+    public ComplaintResponse createComplaint(ComplaintRequest request, Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("user not found"));
-        Booking booking = bookingRepository.findById(complaintRequest.getBookingId())
-            .orElseThrow(() -> new RuntimeException("booking not found"));
 
-        String humanReadableId = generateComplaintId();
+        Booking booking = null;
+        if (request.getBookingId() != null) {
+            booking = bookingRepository.findById(request.getBookingId())
+                .orElseThrow(() -> new RuntimeException("booking not found"));
 
-        Complaint c = new Complaint();
-        c.setComplaintId(humanReadableId);
-        c.setUser(user);
-        c.setBooking(booking);
-        c.setCategory(complaintRequest.getCategory());
-        c.setDescription(complaintRequest.getDescription());
-        c.setStatus(ComplaintStatus.OPEN);
-        c.setCreatedAt(LocalDateTime.now());
-        c.setUpdatedAt(LocalDateTime.now());
-        c.setTitle(complaintRequest.getTitle());
-        c.setExpectedResolutionDate(LocalDateTime.now().plusDays(3));
-        c.setPriority(complaintRequest.getPriority());
+            // Check if customer is actually at the hotel or check-in date has passed
+            if (booking.getCheckInDate().isAfter(java.time.LocalDate.now())) {
+                throw new RuntimeException("Cannot raise a complaint for a booking before the check-in date.");
+            }
+        }
 
-        Complaint saved = complaintRepository.save(c);
+        Complaint complaint = Complaint.builder()
+            .referenceNumber(referenceGeneratorService.generateComplaintReference())
+            .user(user)
+            .booking(booking)
+            .category(request.getCategory())
+            .title(request.getTitle())
+            .description(request.getDescription())
+            .contactPreference(request.getContactPreference())
+            .priority(request.getPriority())
+            .status(ComplaintStatus.OPEN)
+            .expectedResolutionDate(LocalDateTime.now().plusHours(48)) // SLA Example
+            .build();
 
-        // Return a normalized response the UI understands
+        Complaint saved = complaintRepository.save(complaint);
         return toResponse(saved);
     }
 
-    public String generateComplaintId() {
-        long count = complaintRepository.count();
-        long nextNumber = count + 1;
-        return String.format("CMP-%03d", nextNumber);
+    @Transactional
+    public ComplaintResponse updateComplaint(String reference, ComplaintUpdateRequest request, Long userId) {
+        Complaint complaint = getByReferenceAndUser(reference, userId);
+
+        if (complaint.getStatus() != ComplaintStatus.OPEN) {
+            throw new InvalidComplaintStateException("Complaint can only be edited when in OPEN status.");
+        }
+
+        if (request.getTitle() != null) complaint.setTitle(request.getTitle());
+        if (request.getDescription() != null) complaint.setDescription(request.getDescription());
+        if (request.getContactPreference() != null) complaint.setContactPreference(request.getContactPreference());
+
+        return toResponse(complaintRepository.save(complaint));
     }
 
-    // ---------- NEW: list complaints of a user (paged) ----------
+    @Transactional
+    public void resolveComplaint(String reference) {
+        Complaint complaint = getComplaintByReference(reference);
+        if (complaint.getStatus() == ComplaintStatus.CLOSED) {
+            throw new InvalidComplaintStateException("Cannot resolve a CLOSED complaint.");
+        }
+        complaint.setStatus(ComplaintStatus.RESOLVED);
+        complaintRepository.save(complaint);
+    }
+
+    @Transactional
+    public void confirmResolution(String reference, Long userId) {
+        Complaint complaint = getByReferenceAndUser(reference, userId);
+        if (complaint.getStatus() != ComplaintStatus.RESOLVED) {
+            throw new InvalidComplaintStateException("Only RESOLVED complaints can be confirmed by customer.");
+        }
+        complaint.setStatus(ComplaintStatus.CLOSED);
+        complaintRepository.save(complaint);
+    }
+
+    @Transactional
+    public void reopenComplaint(String reference, Long userId) {
+        Complaint complaint = getByReferenceAndUser(reference, userId);
+        if (complaint.getStatus() != ComplaintStatus.RESOLVED) {
+            throw new InvalidComplaintStateException("Only RESOLVED complaints can be reopened by customer.");
+        }
+        complaint.setStatus(ComplaintStatus.OPEN);
+        complaintRepository.save(complaint);
+    }
+
     public Page<ComplaintResponse> myComplaints(Long userId, ComplaintStatus status, Pageable pageable) {
         Page<Complaint> page = (status == null)
             ? complaintRepository.findByUser_Id(userId, pageable)
@@ -83,15 +122,10 @@ public ComplaintResponse createComplaint(ComplaintRequest complaintRequest, Long
         return page.map(this::toResponse);
     }
 
-    // ---------- NEW: track complaint by public complaintId for a user ----------
-    public ComplaintResponse track(String complaintId, Long userId) {
-        Complaint c = complaintRepository.findByComplaintId(complaintId)
-            .filter(it -> it.getUser() != null && it.getUser().getId().equals(userId))
-            .orElseThrow(() -> new RuntimeException("Complaint not found or not owned by user"));
-        return toResponse(c);
+    public ComplaintResponse track(String reference, Long userId) {
+        return toResponse(getByReferenceAndUser(reference, userId));
     }
 
-    // ---------- NEW: list all complaints (Admin/Staff) ----------
     public Page<ComplaintResponse> getAllComplaints(ComplaintStatus status, Pageable pageable) {
         Page<Complaint> page = (status == null)
             ? complaintRepository.findAll(pageable)
@@ -100,10 +134,10 @@ public ComplaintResponse createComplaint(ComplaintRequest complaintRequest, Long
         return page.map(this::toResponse);
     }
 
-    // ---------- NEW: record a staff action on a complaint ----------
+    @Transactional
     public ComplaintResponse addComplaintAction(ComplaintActionRequest request) {
         Complaint complaint = complaintRepository.findById(request.getComplaintId())
-            .orElseThrow(() -> new RuntimeException("Complaint not found"));
+            .orElseThrow(() -> new ComplaintNotFoundException("Complaint not found"));
 
         Staff staff = staffRepository.findById(request.getStaffId())
             .orElseThrow(() -> new RuntimeException("Staff not found"));
@@ -116,29 +150,38 @@ public ComplaintResponse createComplaint(ComplaintRequest complaintRequest, Long
         action.setActionAt(LocalDateTime.now());
         complaintActionRepository.save(action);
 
-        // Update the main complaint status/updatedAt/assignedStaff
         complaint.setStatus(request.getStatus());
-        complaint.setUpdatedAt(LocalDateTime.now());
         complaint.setAssignedStaff(staff);
-
         Complaint updated = complaintRepository.save(complaint);
         return toResponse(updated);
     }
 
-    // ---------- Mapper ----------
+    private Complaint getComplaintByReference(String reference) {
+        return complaintRepository.findByReferenceNumber(reference)
+                .orElseThrow(() -> new ComplaintNotFoundException("Complaint not found: " + reference));
+    }
+
+    private Complaint getByReferenceAndUser(String reference, Long userId) {
+        Complaint complaint = getComplaintByReference(reference);
+        if (complaint.getUser() == null || !complaint.getUser().getId().equals(userId)) {
+            throw new ComplaintNotFoundException("Complaint not found or not owned by user");
+        }
+        return complaint;
+    }
+
     private ComplaintResponse toResponse(Complaint c) {
         return ComplaintResponse.builder()
-            .id(c.getId())
-            .complaintId(c.getComplaintId())
+            .referenceNumber(c.getReferenceNumber())
+            .bookingId(c.getBooking() != null ? c.getBooking().getId() : null)
             .title(c.getTitle())
-            .subject(c.getTitle()) // UI reads 'subject' if present
             .description(c.getDescription())
             .status(c.getStatus())
             .category(c.getCategory())
+            .contactPreference(c.getContactPreference())
             .priority(c.getPriority())
+            .expectedResolutionDate(c.getExpectedResolutionDate())
             .createdAt(c.getCreatedAt())
             .updatedAt(c.getUpdatedAt())
             .build();
     }
-
 }

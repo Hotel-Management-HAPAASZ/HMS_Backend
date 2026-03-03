@@ -1,4 +1,4 @@
-// 
+//
 
 package com.example.demo.services;
 
@@ -187,15 +187,41 @@ public class BookingService {
         throw new RuntimeException("Selected rooms cannot accommodate guests");
 
     // Check availability (ignore same booking)
-    for (Room room : newRooms) {
+    for (int i = 0; i < newRooms.size(); i++) {
+        Room room = newRooms.get(i);
         boolean isBooked = bookingRoomRepository.existsOverlappingBookingForModify(
                 room.getId(),
                 booking.getId(),
                 request.getCheckIn(),
                 request.getCheckOut());
 
-        if (isBooked)
-            throw new RuntimeException("Room not available: " + room.getId());
+        if (isBooked) {
+            // Edge Case Fallback: The current room is taken. Let's try to find an IDENTICAL room
+            // that is available for these dates so the customer doesn't just fail.
+            List<Room> alternativeRooms = roomRepository.findByRoomTypeAndStatus(room.getRoomType(), com.example.demo.enums.RoomStatus.AVAILABLE);
+            boolean foundAlternative = false;
+
+            for (Room altRoom : alternativeRooms) {
+                // don't check the one we just checked
+                if (altRoom.getId().equals(room.getId())) continue;
+
+                boolean altIsBooked = bookingRoomRepository.existsOverlappingBookingForModify(
+                        altRoom.getId(),
+                        booking.getId(),
+                        request.getCheckIn(),
+                        request.getCheckOut());
+
+                if (!altIsBooked) {
+                    newRooms.set(i, altRoom);
+                    foundAlternative = true;
+                    break;
+                }
+            }
+
+            if (!foundAlternative) {
+                throw new RuntimeException("Room not available and no alternative " + room.getRoomType() + " rooms free for these dates.");
+            }
+        }
     }
 
     long days = ChronoUnit.DAYS.between(request.getCheckIn(), request.getCheckOut());

@@ -21,14 +21,14 @@ public interface RoomRepository extends BaseRepository<Room, Long>,JpaSpecificat
 
     Optional<Room> findByRoomNumber(String roomNumber);
     List<Room> findByRoomNumberIn(Collection<String> roomNumbers);
-    
+
 
     List<Room> findByRoomType(String roomType);
-
+    List<Room> findByRoomTypeAndStatus(String roomType, RoomStatus status);
 
     // List<Room> findByHotelId(Long hotelId);
-  
-@Query("""
+
+    @Query("""
         SELECT r FROM Room r
         WHERE LOWER(r.roomNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))
            OR LOWER(r.roomType) LIKE LOWER(CONCAT('%', :keyword, '%'))
@@ -37,7 +37,7 @@ public interface RoomRepository extends BaseRepository<Room, Long>,JpaSpecificat
 
 
     long countByStatus(RoomStatus status);
-   
+
 List<Room> findByRoomTypeAndStatusAndMaxGuestGreaterThanEqual(
             String roomType,
             RoomStatus status,
@@ -49,7 +49,7 @@ List<Room> findByRoomTypeAndStatusAndMaxGuestGreaterThanEqual(
       AND r.maxGuest >= :totalGuests
       AND r.status = com.example.demo.enums.RoomStatus.AVAILABLE
       AND r.id NOT IN (
-          SELECT br.room.id 
+          SELECT br.room.id
           FROM BookingRoom br
           JOIN br.booking b
           WHERE b.checkInDate <= :checkOut
