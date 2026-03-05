@@ -13,13 +13,13 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
 
     Optional<Payment> findByTransactionId(String transactionId);
     Optional<Payment> findByBooking(Booking booking);
-    Optional<Payment> findByBookingId(Long bookingId);
-    Optional<Payment> findTopByBookingIdAndStatusOrderByIdDesc(Long bookingId, PaymentStatus status);
-    Optional<Payment> findTopByBookingIdOrderByIdDesc(Long bookingId);
+    Optional<Payment> findByBooking_Id(Long bookingId);
+    Optional<Payment> findTopByBooking_IdAndStatusOrderByIdDesc(Long bookingId, PaymentStatus status);
+    Optional<Payment> findTopByBooking_IdOrderByIdDesc(Long bookingId);
 
     List<Payment> findByStatus(PaymentStatus status);
 
-    boolean existsByBookingIdAndStatus(Long bookingId, PaymentStatus status);
-    boolean existsByBookingId(Long bookingId);
+    boolean existsByBooking_IdAndStatus(Long bookingId, PaymentStatus status);
+    boolean existsByBooking_Id(Long bookingId);
 
 }

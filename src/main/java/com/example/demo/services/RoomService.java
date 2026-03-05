@@ -175,11 +175,11 @@ public class RoomService {
             int children,
             String roomType) {
 
-        if (checkInDate == null || checkOutDate == null)
-            throw new RuntimeException("Check-in and Check-out dates are required");
-
-        if (checkOutDate.isBefore(checkInDate))
-            throw new RuntimeException("Check-out must be after check-in");
+        // If dates are provided, validate them
+        if (checkInDate != null && checkOutDate != null) {
+            if (checkOutDate.isBefore(checkInDate))
+                throw new RuntimeException("Check-out must be after check-in");
+        }
 
         if (adults < 1)
             throw new RuntimeException("At least 1 adult required");
@@ -189,21 +189,52 @@ public class RoomService {
 
         int totalGuests = adults + children;
 
-        var rooms = roomRepository.findAvailableRooms(checkInDate, checkOutDate, roomType, totalGuests);
+        // Fetch ALL potential rooms regardless of immediate availability
+        var allPotentialRooms = roomRepository.findAllPotentialRooms(roomType, totalGuests);
 
-        if (rooms.isEmpty())
-            throw new RuntimeException("No rooms found");
+        // If no dates, return everything in a BROWSE state
+        if (checkInDate == null || checkOutDate == null) {
+            return allPotentialRooms.stream().map(room -> {
+                RoomSearchResponse dto = new RoomSearchResponse();
+                dto.setRoomId(room.getId());
+                dto.setRoomType(room.getRoomType());
+                dto.setRoomNumber(room.getRoomNumber());
+                dto.setPricePerNight(room.getPricePerNight());
+                dto.setMaxGuest(room.getMaxGuest());
+                dto.setAmenities(room.getAmenities().stream().map(Amenity::getName).collect(Collectors.toList()));
+                dto.setImageUrl("https://hotel.com/images/" + room.getId());
+                dto.setAvailabilityStatus("BROWSE");
+                dto.setUnavailableUntil(null);
+                return dto;
+            }).collect(Collectors.toList());
+        }
 
-        return rooms.stream().map(room -> {
+        // Otherwise, identify which ones are strictly available for these dates
+        Set<Long> availableRoomIds = roomRepository.findAvailableRooms(checkInDate, checkOutDate, roomType, totalGuests)
+                .stream()
+                .map(com.example.demo.models.Room::getId)
+                .collect(Collectors.toSet());
+
+        return allPotentialRooms.stream().map(room -> {
             RoomSearchResponse dto = new RoomSearchResponse();
             dto.setRoomId(room.getId());
             dto.setRoomType(room.getRoomType());
             dto.setRoomNumber(room.getRoomNumber());
             dto.setPricePerNight(room.getPricePerNight());
             dto.setMaxGuest(room.getMaxGuest());
-            dto.setAvailabilityStatus(room.getStatus().toString());
             dto.setAmenities(room.getAmenities().stream().map(Amenity::getName).collect(Collectors.toList()));
             dto.setImageUrl("https://hotel.com/images/" + room.getId());
+
+            if (availableRoomIds.contains(room.getId())) {
+                dto.setAvailabilityStatus("AVAILABLE");
+                dto.setUnavailableUntil(null);
+            } else {
+                dto.setAvailabilityStatus("BOOKED");
+                // Find when it becomes available (the checkOutDate of the first overlapping/upcoming booking)
+                bookingRepository.findFirstOccupyingBooking(room.getId(), checkInDate)
+                        .ifPresent(b -> dto.setUnavailableUntil(b.getCheckOutDate()));
+            }
+
             return dto;
         }).collect(Collectors.toList());
     }

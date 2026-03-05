@@ -89,8 +89,8 @@ public class RoomController {
 
     @GetMapping("/rooms/search")
     public ResponseEntity<?> searchAvailableRooms(
-            @RequestParam LocalDate checkInDate,
-            @RequestParam LocalDate checkOutDate,
+            @RequestParam(required = false) java.time.LocalDate checkInDate,
+            @RequestParam(required = false) java.time.LocalDate checkOutDate,
             @RequestParam(defaultValue = "1") int adults,
             @RequestParam(defaultValue = "0") int children,
             @RequestParam String roomType) {

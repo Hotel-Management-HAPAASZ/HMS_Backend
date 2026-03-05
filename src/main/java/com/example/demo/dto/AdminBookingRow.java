@@ -18,6 +18,7 @@ public class AdminBookingRow {
     private Double totalAmount;
     private String status;      // CONFIRMED | PENDING | CANCELLED | ...
     private String paymentMethod;
+    private Double refundAmount;
 
     private LocalDateTime createdAt;
 }

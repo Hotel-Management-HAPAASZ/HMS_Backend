@@ -64,4 +64,14 @@ List<Room> findAvailableRooms(
         @Param("totalGuests") Integer totalGuests
 );
 
+    @Query("""
+        SELECT r FROM Room r
+        WHERE (:roomType = 'ALL_ROOMS' OR r.roomType = :roomType)
+          AND r.maxGuest >= :totalGuests
+          AND r.status <> com.example.demo.enums.RoomStatus.UNDER_MAINTENANCE
+    """)
+    List<Room> findAllPotentialRooms(
+            @Param("roomType") String roomType,
+            @Param("totalGuests") Integer totalGuests
+    );
 }

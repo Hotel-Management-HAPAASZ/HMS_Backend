@@ -61,7 +61,7 @@ public class UserBookingHistoryService {
             response.setRoomTypes(roomTypes);
 
             // Get payment status
-            Payment payment = paymentRepository.findTopByBookingIdOrderByIdDesc(booking.getId()).orElse(null);
+            Payment payment = paymentRepository.findTopByBooking_IdOrderByIdDesc(booking.getId()).orElse(null);
 
             if (payment != null) {
                 response.setPaymentStatus(payment.getStatus().name());
@@ -92,7 +92,7 @@ public class UserBookingHistoryService {
         response.setNumberOfGuests(booking.getNumberOfGuests());
         response.setBookingStatus((booking.getStatus().name()));
 
-        Payment payment = paymentRepository.findTopByBookingIdOrderByIdDesc(booking.getId()).orElse(null);
+        Payment payment = paymentRepository.findTopByBooking_IdOrderByIdDesc(booking.getId()).orElse(null);
 
         if(payment != null){
             response.setPaymentStatus(payment.getStatus().name());

@@ -28,6 +28,7 @@ public class PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
+    private final InvoiceService invoiceService;
 
 
 
@@ -118,32 +119,10 @@ public class PaymentService {
         bookingRepository.save(booking);
         paymentRepository.save(payment);
 
-        generateInvoice(payment);
+        invoiceService.createInvoice(payment);
 
         return buildResponse(payment, "Payment successful");
     }
-
-
-
-    private void generateInvoice(Payment payment) {
-
-        Booking booking = payment.getBooking();
-
-        Invoice invoice = new Invoice();
-        invoice.setInvoiceNumber("INV-" +
-                UUID.randomUUID().toString().substring(0, 8));
-
-        invoice.setBooking(booking);
-        invoice.setPayment(payment);
-        invoice.setBaseAmount(payment.getAmount());
-        invoice.setTaxAmount(0.0);
-        invoice.setTotalAmount(payment.getAmount());
-        invoice.setGeneratedAt(LocalDateTime.now());
-
-        invoiceRepository.save(invoice);
-    }
-
-
 
     private PaymentResponse buildResponse(Payment payment, String message) {
 

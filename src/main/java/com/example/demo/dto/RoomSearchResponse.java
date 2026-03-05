@@ -13,5 +13,6 @@ public class RoomSearchResponse {
     private Integer maxGuest;
     private String availabilityStatus;
     private List<String> amenities;
-    private String imageUrl;     
+    private String imageUrl;
+    private java.time.LocalDate unavailableUntil;
 }

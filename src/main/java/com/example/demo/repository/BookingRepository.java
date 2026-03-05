@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpecificationExecutor<Booking>{
@@ -36,8 +37,8 @@ public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpe
                 FROM Booking b
                 JOIN b.bookingRooms br
                 WHERE b.status = 'CONFIRMED'
-                  AND b.checkInDate <= :date
-                  AND b.checkOutDate > :date
+                   AND b.checkInDate <= :date
+                   AND b.checkOutDate > :date
             """)
     List<Long> findBookedRoomIdsOnDate(@Param("date") LocalDate date);
 
@@ -78,4 +79,16 @@ public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpe
             Long roomId,
             LocalDate date);
 
+    @Query("""
+        SELECT b FROM Booking b
+        JOIN b.bookingRooms br
+        WHERE br.room.id = :roomId
+          AND b.status NOT IN (com.example.demo.enums.BookingStatus.CANCELLED, com.example.demo.enums.BookingStatus.CHECKED_OUT)
+          AND b.checkOutDate > :date
+        ORDER BY b.checkInDate ASC
+        LIMIT 1
+    """)
+    Optional<Booking> findFirstOccupyingBooking(
+            @Param("roomId") Long roomId,
+            @Param("date") LocalDate date);
 }

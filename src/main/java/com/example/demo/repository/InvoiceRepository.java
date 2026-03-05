@@ -10,5 +10,7 @@ public interface InvoiceRepository extends BaseRepository<Invoice, Long> {
 
     Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
 
-    Optional<Invoice> findByBookingId(Long bookingId);
+    Optional<Invoice> findByBooking_Id(Long bookingId);
+
+    boolean existsByBooking_Id(Long bookingId);
 }

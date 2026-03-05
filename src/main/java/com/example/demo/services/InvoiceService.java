@@ -7,8 +7,12 @@ import com.example.demo.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import com.example.demo.models.Payment;
+import com.example.demo.models.Booking;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +22,7 @@ public class InvoiceService {
 
     public InvoiceResponse getInvoiceByBookingId(Long bookingId) {
 
-        Invoice invoice = invoiceRepository.findByBookingId(bookingId)
+        Invoice invoice = invoiceRepository.findByBooking_Id(bookingId)
                 .orElseThrow(() ->
                         new RuntimeException("Invoice not found for booking id: " + bookingId));
 
@@ -91,5 +95,20 @@ public class InvoiceService {
         );
 
         return response;
+    }
+
+    public void createInvoice(Payment payment) {
+        Booking booking = payment.getBooking();
+
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8));
+        invoice.setBooking(booking);
+        invoice.setPayment(payment);
+        invoice.setBaseAmount(payment.getAmount());
+        invoice.setTaxAmount(0.0);
+        invoice.setTotalAmount(payment.getAmount());
+        invoice.setGeneratedAt(LocalDateTime.now());
+
+        invoiceRepository.save(invoice);
     }
 }

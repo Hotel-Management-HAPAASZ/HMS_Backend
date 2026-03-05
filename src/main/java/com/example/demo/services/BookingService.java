@@ -33,6 +33,8 @@ public class BookingService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final InvoiceService invoiceService;
 
     @Transactional
     public BookingResponse createBooking(BookingRequest request) {
@@ -232,7 +234,7 @@ public class BookingService {
 
     // Get last successful payment
     Payment lastPayment = paymentRepository
-            .findTopByBookingIdAndStatusOrderByIdDesc(bookingId, PaymentStatus.SUCCESS)
+            .findTopByBooking_IdAndStatusOrderByIdDesc(bookingId, PaymentStatus.SUCCESS)
             .orElseThrow(() -> new RuntimeException("Previous payment not found"));
 
     double oldAmount = lastPayment.getAmount();
@@ -327,7 +329,7 @@ public class BookingService {
 
         // Find last successful payment (if any)
         Payment payment = paymentRepository
-                .findTopByBookingIdAndStatusOrderByIdDesc(bookingId, PaymentStatus.SUCCESS)
+                .findTopByBooking_IdAndStatusOrderByIdDesc(bookingId, PaymentStatus.SUCCESS)
                 .orElse(null);
 
         if (payment != null) {
@@ -401,8 +403,11 @@ public class BookingService {
             row.setCustomerName(b.getUser().getUserName());
         }
 
-        paymentRepository.findTopByBookingIdOrderByIdDesc(b.getId())
-                .ifPresent(p -> row.setPaymentMethod(p.getPaymentMethod() != null ? p.getPaymentMethod().name() : null));
+        paymentRepository.findTopByBooking_IdOrderByIdDesc(b.getId())
+                .ifPresent(p -> {
+                    row.setPaymentMethod(p.getPaymentMethod() != null ? p.getPaymentMethod().name() : null);
+                    row.setRefundAmount(p.getRefundAmount());
+                });
 
         return row;
     }
@@ -434,6 +439,22 @@ public class BookingService {
         booking.setStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
+
+        if (newStatus == BookingStatus.CONFIRMED) {
+            paymentRepository.findTopByBooking_IdOrderByIdDesc(booking.getId())
+                    .ifPresent(p -> {
+                        if (PaymentStatus.PENDING.equals(p.getStatus()) || PaymentStatus.INITIATED.equals(p.getStatus())) {
+                            p.setStatus(PaymentStatus.SUCCESS);
+                            p.setPaidAt(LocalDateTime.now());
+                            paymentRepository.save(p);
+                        }
+
+                        // Generate invoice if not already present
+                        if (!invoiceRepository.existsByBooking_Id(p.getBooking().getId())) {
+                            invoiceService.createInvoice(p);
+                        }
+                    });
+        }
 
         return new StatusUpdateResponse(booking.getId(), booking.getStatus().name(), booking.getUpdatedAt());
     }
