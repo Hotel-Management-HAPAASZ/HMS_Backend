@@ -273,7 +273,7 @@ public class AdminService {
     // AdminUpdateBookingRequest request) {
 
     // Booking booking = bookingRepository.findById(bookingId)
-    // .orElseThrow(() -> new RuntimeException("Booking not found"));
+    // .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
 
     // if (request.getCheckInDate() != null) {
     // booking.setCheckInDate(request.getCheckInDate());
@@ -290,7 +290,7 @@ public class AdminService {
     // public void cancelBooking(Long bookingId) {
 
     // Booking booking = bookingRepository.findById(bookingId)
-    // .orElseThrow(() -> new RuntimeException("Booking not found"));
+    // .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
 
     // booking.setStatus(BookingStatus.CANCELLED);
     // booking.setUpdatedAt(LocalDateTime.now());
@@ -564,13 +564,14 @@ public class AdminService {
         return complaintRepository.findAll();
     }
 
-    public void assignComplaint(Long complaintId, Long staffId) {
+    public void assignComplaint(Long complaintId, Long userId) {
 
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        Staff staff = staffRepository.findById(staffId)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+        // userId comes from the User entity — look up the Staff record by user_id
+        Staff staff = staffRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Staff not found for user id: " + userId));
 
         complaint.setAssignedStaff(staff);
         complaint.setStatus(ComplaintStatus.IN_PROGRESS);

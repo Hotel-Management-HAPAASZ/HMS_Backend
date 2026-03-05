@@ -44,7 +44,7 @@ public class ComplaintService {
         Booking booking = null;
         if (request.getBookingId() != null) {
             booking = bookingRepository.findById(request.getBookingId())
-                .orElseThrow(() -> new RuntimeException("booking not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID. Please verify your booking reference."));
 
             // Check if customer is actually at the hotel or check-in date has passed
             if (booking.getCheckInDate().isAfter(java.time.LocalDate.now())) {
@@ -63,6 +63,8 @@ public class ComplaintService {
             .priority(request.getPriority())
             .status(ComplaintStatus.OPEN)
             .expectedResolutionDate(LocalDateTime.now().plusHours(48)) // SLA Example
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
             .build();
 
         Complaint saved = complaintRepository.save(complaint);
@@ -81,6 +83,8 @@ public class ComplaintService {
         if (request.getDescription() != null) complaint.setDescription(request.getDescription());
         if (request.getContactPreference() != null) complaint.setContactPreference(request.getContactPreference());
 
+        complaint.setUpdatedAt(LocalDateTime.now());
+
         return toResponse(complaintRepository.save(complaint));
     }
 
@@ -91,6 +95,7 @@ public class ComplaintService {
             throw new InvalidComplaintStateException("Cannot resolve a CLOSED complaint.");
         }
         complaint.setStatus(ComplaintStatus.RESOLVED);
+        complaint.setUpdatedAt(LocalDateTime.now());
         complaintRepository.save(complaint);
     }
 
@@ -101,6 +106,7 @@ public class ComplaintService {
             throw new InvalidComplaintStateException("Only RESOLVED complaints can be confirmed by customer.");
         }
         complaint.setStatus(ComplaintStatus.CLOSED);
+        complaint.setUpdatedAt(LocalDateTime.now());
         complaintRepository.save(complaint);
     }
 
@@ -111,6 +117,7 @@ public class ComplaintService {
             throw new InvalidComplaintStateException("Only RESOLVED complaints can be reopened by customer.");
         }
         complaint.setStatus(ComplaintStatus.OPEN);
+        complaint.setUpdatedAt(LocalDateTime.now());
         complaintRepository.save(complaint);
     }
 
@@ -139,8 +146,8 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(request.getComplaintId())
             .orElseThrow(() -> new ComplaintNotFoundException("Complaint not found"));
 
-        Staff staff = staffRepository.findById(request.getStaffId())
-            .orElseThrow(() -> new RuntimeException("Staff not found"));
+        Staff staff = staffRepository.findByUserId(request.getStaffId())
+            .orElseThrow(() -> new RuntimeException("Staff not found for user id: " + request.getStaffId()));
 
         ComplaintAction action = new ComplaintAction();
         action.setComplaint(complaint);
@@ -152,6 +159,7 @@ public class ComplaintService {
 
         complaint.setStatus(request.getStatus());
         complaint.setAssignedStaff(staff);
+        complaint.setUpdatedAt(LocalDateTime.now());
         Complaint updated = complaintRepository.save(complaint);
         return toResponse(updated);
     }
@@ -171,6 +179,7 @@ public class ComplaintService {
 
     private ComplaintResponse toResponse(Complaint c) {
         return ComplaintResponse.builder()
+            .id(c.getId())
             .referenceNumber(c.getReferenceNumber())
             .bookingId(c.getBooking() != null ? c.getBooking().getId() : null)
             .title(c.getTitle())
@@ -179,6 +188,8 @@ public class ComplaintService {
             .category(c.getCategory())
             .contactPreference(c.getContactPreference())
             .priority(c.getPriority())
+            .assignedUserId(c.getAssignedStaff() != null && c.getAssignedStaff().getUser() != null ? c.getAssignedStaff().getUser().getId() : null)
+            .assignedUserName(c.getAssignedStaff() != null && c.getAssignedStaff().getUser() != null ? c.getAssignedStaff().getUser().getUserName() : null)
             .expectedResolutionDate(c.getExpectedResolutionDate())
             .createdAt(c.getCreatedAt())
             .updatedAt(c.getUpdatedAt())

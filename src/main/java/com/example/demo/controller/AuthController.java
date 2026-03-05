@@ -114,7 +114,8 @@ Map.of(
                     user.getEmail(),
                     user.getRole(),
                     token,
-                    user.isFirstLogin());
+                    user.isFirstLogin(),
+                    user.getPhoneNumber());
 
             return ResponseEntity.ok(response);
 

@@ -135,7 +135,7 @@ public class BookingService {
     public ModifyBookingResponse modifyBooking(Long bookingId, ModifyBookingRequest request) {
 
     Booking booking = bookingRepository.findById(bookingId)
-            .orElseThrow(() -> new RuntimeException("Booking not found"));
+            .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
 
     if (booking.getStatus() == BookingStatus.CANCELLED)
         throw new RuntimeException("Cancelled booking cannot be modified");
@@ -312,7 +312,7 @@ public class BookingService {
     public String cancelBooking(Long bookingId) {
 
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
 
         // Already cancelled
         if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
@@ -407,7 +407,7 @@ public class BookingService {
     @Transactional
     public StatusUpdateResponse setStatus(Long bookingId, StatusUpdateRequest req) {
         var booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
 
         String target = req.getStatus();
         if (target == null)
@@ -437,7 +437,7 @@ public class BookingService {
 
     public AdminBookingRow getOne(Long bookingId) {
         var b = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
         return toRow(b);
     }
 }

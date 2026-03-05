@@ -45,10 +45,17 @@ public class UserBookingHistoryService {
             response.setBookingStatus(booking.getStatus().name());
             response.setTotalAmount(booking.getAmount());
 
+            List<String> roomNumbers = booking.getBookingRooms()
+                    .stream()
+                    .map(br -> br.getRoom().getRoomNumber())
+                    .collect(Collectors.toList());
+
+            response.setRoomNumbers(roomNumbers);
+
             // Extract room types
             List<String> roomTypes = booking.getBookingRooms()
                     .stream()
-                    .map(br -> br.getRoom().getRoomType()) // assuming roomType exists
+                    .map(br -> br.getRoom().getRoomType())
                     .collect(Collectors.toList());
 
             response.setRoomTypes(roomTypes);
@@ -84,7 +91,7 @@ public class UserBookingHistoryService {
         response.setTotalAmount(booking.getAmount());
         response.setNumberOfGuests(booking.getNumberOfGuests());
         response.setBookingStatus((booking.getStatus().name()));
-        
+
         Payment payment = paymentRepository.findTopByBookingIdOrderByIdDesc(booking.getId()).orElse(null);
 
         if(payment != null){
@@ -94,6 +101,7 @@ public class UserBookingHistoryService {
         }
 
         response.setRoomTypes(booking.getBookingRooms().stream().map(br -> br.getRoom().getRoomType()).toList());
+        response.setRoomNumbers(booking.getBookingRooms().stream().map(br -> br.getRoom().getRoomNumber()).toList());
 
         return response;
     }

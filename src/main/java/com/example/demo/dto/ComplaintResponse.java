@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ComplaintResponse {
+    private Long id;              // DB primary key — use for admin API calls
     private String referenceNumber;
     private Long bookingId;
     private String title;
@@ -18,6 +19,8 @@ public class ComplaintResponse {
     private ContactPreference contactPreference;
     private ComplaintStatus status;
     private PriorityOfComplaint priority;
+    private Long assignedUserId;       // User.id of the assigned staff member
+    private String assignedUserName;   // display name for the assignee
     private LocalDateTime expectedResolutionDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

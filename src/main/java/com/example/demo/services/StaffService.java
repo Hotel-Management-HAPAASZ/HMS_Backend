@@ -23,7 +23,7 @@ public class StaffService {
 
   public List<ComplaintResponse> getAssignedComplaints(Long staffId)
    {
-      Staff staff =  staffRepository.findById(staffId).orElseThrow(()-> new RuntimeException("Staff not found"));
+      Staff staff = staffRepository.findByUserId(staffId).orElseThrow(()-> new RuntimeException("Staff not found for user id: " + staffId));
       List<Complaint> complaints = complaintRepository.findByAssignedStaff_Id(staffId);
        List<ComplaintResponse> responseList = new ArrayList<>();
 
@@ -83,8 +83,8 @@ public class StaffService {
     Complaint complaint = complaintRepository.findById(request.getComplaintId())
             .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-    Staff staff = staffRepository.findById(request.getStaffId())
-            .orElseThrow(() -> new RuntimeException("Staff not found"));
+    Staff staff = staffRepository.findByUserId(request.getStaffId())
+            .orElseThrow(() -> new RuntimeException("Staff not found for user id: " + request.getStaffId()));
 
     if (complaint.getAssignedStaff() == null ||
         !complaint.getAssignedStaff().getId().equals(staff.getId())) {

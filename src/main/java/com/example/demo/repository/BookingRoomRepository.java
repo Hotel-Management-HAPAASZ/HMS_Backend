@@ -16,7 +16,7 @@ public interface BookingRoomRepository extends JpaRepository<BookingRoom, Long> 
             SELECT COUNT(br) > 0
             FROM BookingRoom br
             WHERE br.room.id = :roomId
-            AND br.booking.status <> 'CANCELLED'
+            AND br.booking.status <> com.example.demo.enums.BookingStatus.CANCELLED
             AND br.booking.checkInDate < :checkOutDate
             AND br.booking.checkOutDate > :checkInDate
             """)
@@ -27,11 +27,11 @@ public interface BookingRoomRepository extends JpaRepository<BookingRoom, Long> 
     );
 
     @Query("""
-            SELECT COUNT(br) > 0 
+            SELECT COUNT(br) > 0
             FROM BookingRoom br
             WHERE br.room.id = :roomId
             AND br.booking.id <> :bookingId
-            AND br.booking.status <> 'CANCELLED'
+            AND br.booking.status <> com.example.demo.enums.BookingStatus.CANCELLED
             AND br.booking.checkInDate < :checkOut
             AND br.booking.checkOutDate > :checkIn
             """)
@@ -42,5 +42,5 @@ public interface BookingRoomRepository extends JpaRepository<BookingRoom, Long> 
         @Param("checkOut") LocalDate checkOut
     );
 }
-    
+
 

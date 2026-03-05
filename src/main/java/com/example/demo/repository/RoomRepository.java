@@ -45,15 +45,16 @@ List<Room> findByRoomTypeAndStatusAndMaxGuestGreaterThanEqual(
     );
  @Query("""
     SELECT r FROM Room r
-    WHERE r.roomType = :roomType
+    WHERE (:roomType = 'ALL_ROOMS' OR r.roomType = :roomType)
       AND r.maxGuest >= :totalGuests
       AND r.status = com.example.demo.enums.RoomStatus.AVAILABLE
       AND r.id NOT IN (
           SELECT br.room.id
           FROM BookingRoom br
           JOIN br.booking b
-          WHERE b.checkInDate <= :checkOut
-            AND b.checkOutDate >= :checkIn
+          WHERE b.checkInDate < :checkOut
+            AND b.checkOutDate > :checkIn
+            AND b.status NOT IN (com.example.demo.enums.BookingStatus.CANCELLED, com.example.demo.enums.BookingStatus.CHECKED_OUT)
       )
 """)
 List<Room> findAvailableRooms(
