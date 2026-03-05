@@ -401,6 +401,9 @@ public class BookingService {
             row.setCustomerName(b.getUser().getUserName());
         }
 
+        paymentRepository.findTopByBookingIdOrderByIdDesc(b.getId())
+                .ifPresent(p -> row.setPaymentMethod(p.getPaymentMethod() != null ? p.getPaymentMethod().name() : null));
+
         return row;
     }
 

@@ -68,6 +68,9 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
         }
 
+        booking.setStatus(BookingStatus.PENDING);
+        bookingRepository.save(booking);
+
         Payment savedPayment = paymentRepository.save(payment);
 
         return buildResponse(
@@ -78,7 +81,7 @@ public class PaymentService {
         );
     }
 
-  
+
 
     @Transactional
     public PaymentResponse verifyPayment(PaymentVerifyRequest request) {
@@ -120,7 +123,7 @@ public class PaymentService {
         return buildResponse(payment, "Payment successful");
     }
 
-  
+
 
     private void generateInvoice(Payment payment) {
 
