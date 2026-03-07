@@ -56,13 +56,14 @@ public class SecurityConfig {
 
                 // FIX: add leading "/" on matchers so they actually match
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/amenities/**").permitAll()
-                .requestMatchers("/api/user/**").permitAll()
-                .requestMatchers("/api/forgot").permitAll()
-                .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/api/forgot/**").permitAll()
+
+                // Optional: allow browsing rooms/amenities without login
+                .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/amenities/**").permitAll()
 
                 // Your admin area
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**").hasAuthority("ADMIN")
 
                 // Everything else must be authenticated
                 .anyRequest().authenticated()

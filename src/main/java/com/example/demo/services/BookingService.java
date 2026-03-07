@@ -464,6 +464,32 @@ public class BookingService {
                 .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID."));
         return toRow(b);
     }
+
+    // Active bookings for complaint dropdown
+    public List<UserBookingHistoryResponse> getActiveBookingsForUser(Long userId) {
+        LocalDate today = LocalDate.now();
+        List<Booking> activeBookings = bookingRepository.findAllActiveStayBookingsForUser(userId, today);
+
+        return activeBookings.stream().map(b -> {
+            UserBookingHistoryResponse dto = new UserBookingHistoryResponse();
+            dto.setBookingId(b.getId());
+            dto.setCheckIn(b.getCheckInDate());
+            dto.setCheckOut(b.getCheckOutDate());
+            dto.setNumberOfGuests(b.getNumberOfGuests());
+            dto.setBookingStatus(b.getStatus() != null ? b.getStatus().name() : null);
+            dto.setTotalAmount(b.getAmount());
+
+            if (b.getBookingRooms() != null) {
+                dto.setRoomTypes(b.getBookingRooms().stream()
+                    .map(br -> br.getRoom().getRoomType())
+                    .toList());
+                dto.setRoomNumbers(b.getBookingRooms().stream()
+                    .map(br -> br.getRoom().getRoomNumber())
+                    .toList());
+            }
+            return dto;
+        }).toList();
+    }
 }
 
 

@@ -24,4 +24,5 @@ public class ComplaintResponse {
     private LocalDateTime expectedResolutionDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String resolutionNote;       // latest staff action note (for resolved/closed)
 }

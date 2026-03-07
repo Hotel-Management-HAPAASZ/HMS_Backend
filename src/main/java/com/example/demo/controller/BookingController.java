@@ -39,6 +39,13 @@ public class BookingController {
         return ResponseEntity.ok(bookings);
     }
 
+    // Active (checked-in) bookings for complaint dropdown
+    @GetMapping("/user/{userId}/active")
+    public ResponseEntity<List<UserBookingHistoryResponse>> getActiveBookings(@PathVariable Long userId) {
+        List<UserBookingHistoryResponse> active = bookingService.getActiveBookingsForUser(userId);
+        return ResponseEntity.ok(active);
+    }
+
     @GetMapping("/admin/history")
     public ResponseEntity<List<UserBookingHistoryResponse>> getAllUserBookingHistory() {
         List<UserBookingHistoryResponse> bookings = userBookingHistoryService.getAllBookings();

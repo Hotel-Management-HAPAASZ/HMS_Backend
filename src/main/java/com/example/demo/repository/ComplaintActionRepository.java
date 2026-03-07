@@ -10,4 +10,6 @@ public interface ComplaintActionRepository
         extends BaseRepository<ComplaintAction, Long> {
 
     List<ComplaintAction> findByComplaintIdOrderByActionAtAsc(Long complaintId);
+
+    java.util.Optional<ComplaintAction> findTopByComplaintIdOrderByActionAtDesc(Long complaintId);
 }

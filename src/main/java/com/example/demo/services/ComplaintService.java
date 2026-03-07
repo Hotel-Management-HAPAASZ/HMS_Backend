@@ -41,15 +41,34 @@ public class ComplaintService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("user not found"));
 
-        Booking booking = null;
+        final java.time.LocalDate today = java.time.LocalDate.now();
+
+        // ✅ Enforce: complaints can only be raised for an active stay (guest currently at hotel)
+        // - If bookingId provided: validate ownership + active date window
+        // - If bookingId missing: auto-pick the current active booking for the user (or reject)
+        Booking booking;
         if (request.getBookingId() != null) {
             booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new RuntimeException("Booking not found for the provided ID. Please verify your booking reference."));
 
-            // Check if customer is actually at the hotel or check-in date has passed
-            if (booking.getCheckInDate().isAfter(java.time.LocalDate.now())) {
-                throw new RuntimeException("Cannot raise a complaint for a booking before the check-in date.");
+            if (booking.getUser() == null || booking.getUser().getId() == null || !booking.getUser().getId().equals(userId)) {
+                throw new RuntimeException("You can only raise complaints for your own booking.");
             }
+
+            // Must be currently staying: checkIn <= today <= checkOut
+            if (booking.getCheckInDate() == null || booking.getCheckOutDate() == null
+                    || today.isBefore(booking.getCheckInDate())
+                    || today.isAfter(booking.getCheckOutDate())) {
+                throw new RuntimeException("You can only raise complaints during your stay (between check-in and check-out dates).");
+            }
+
+            // Must be actually checked-in
+            if (booking.getStatus() == null || booking.getStatus() != com.example.demo.enums.BookingStatus.CHECKED_IN) {
+                throw new RuntimeException("You can only raise complaints after check-in.");
+            }
+        } else {
+            booking = bookingRepository.findActiveStayBookingForUser(userId, today)
+                .orElseThrow(() -> new RuntimeException("You can only raise a complaint during an active stay. No current booking found."));
         }
 
         Complaint complaint = Complaint.builder()
@@ -178,6 +197,12 @@ public class ComplaintService {
     }
 
     private ComplaintResponse toResponse(Complaint c) {
+        // Get the latest staff action note (resolution note)
+        String latestNote = complaintActionRepository
+            .findTopByComplaintIdOrderByActionAtDesc(c.getId())
+            .map(a -> a.getActionNote())
+            .orElse(null);
+
         return ComplaintResponse.builder()
             .id(c.getId())
             .referenceNumber(c.getReferenceNumber())
@@ -193,6 +218,7 @@ public class ComplaintService {
             .expectedResolutionDate(c.getExpectedResolutionDate())
             .createdAt(c.getCreatedAt())
             .updatedAt(c.getUpdatedAt())
+            .resolutionNote(latestNote)
             .build();
     }
 }

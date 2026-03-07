@@ -71,6 +71,38 @@ public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpe
 
     List<Booking> findByUserId(Long userId);
 
+    @Query("""
+        SELECT DISTINCT b
+        FROM Booking b
+        JOIN FETCH b.bookingRooms br
+        JOIN FETCH br.room r
+        WHERE b.user.id = :userId
+          AND b.status = com.example.demo.enums.BookingStatus.CHECKED_IN
+          AND b.checkInDate <= :today
+          AND b.checkOutDate >= :today
+        ORDER BY b.checkInDate DESC
+    """)
+    Optional<Booking> findActiveStayBookingForUser(
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today
+    );
+
+    @Query("""
+        SELECT DISTINCT b
+        FROM Booking b
+        JOIN FETCH b.bookingRooms br
+        JOIN FETCH br.room r
+        WHERE b.user.id = :userId
+          AND b.status = com.example.demo.enums.BookingStatus.CHECKED_IN
+          AND b.checkInDate <= :today
+          AND b.checkOutDate >= :today
+        ORDER BY b.checkInDate DESC
+    """)
+    List<Booking> findAllActiveStayBookingsForUser(
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today
+    );
+
     long countByCheckInDate(LocalDate date);
 
     long countByCheckInDateBetween(LocalDate start, LocalDate end);

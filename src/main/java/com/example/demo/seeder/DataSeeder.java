@@ -2,8 +2,10 @@ package com.example.demo.seeder;
 
 import com.example.demo.enums.RoomStatus;
 import com.example.demo.models.Amenity;
+import com.example.demo.models.FoodItem;
 import com.example.demo.models.Room;
 import com.example.demo.repository.AmenityRepository;
+import com.example.demo.repository.FoodItemRepository;
 import com.example.demo.repository.RoomRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -17,15 +19,18 @@ public class DataSeeder implements CommandLineRunner {
 
     private final RoomRepository roomRepository;
     private final AmenityRepository amenityRepository;
+    private final FoodItemRepository foodItemRepository;
 
-    public DataSeeder(RoomRepository roomRepository, AmenityRepository amenityRepository) {
+    public DataSeeder(RoomRepository roomRepository, AmenityRepository amenityRepository, FoodItemRepository foodItemRepository) {
         this.roomRepository = roomRepository;
         this.amenityRepository = amenityRepository;
+        this.foodItemRepository = foodItemRepository;
     }
 
     @Override
     public void run(String... args) throws Exception {
         seedAmenitiesAndRooms();
+        seedFoodMenu();
     }
 
     private void seedAmenitiesAndRooms() {
@@ -111,5 +116,42 @@ public class DataSeeder implements CommandLineRunner {
         } else {
             System.out.println("Rooms already exist. Skipping seeding.");
         }
+    }
+
+    private void seedFoodMenu() {
+        if (foodItemRepository.count() == 0) {
+            System.out.println("Seeding food menu...");
+
+            List<FoodItem> items = List.of(
+                    createItem("Margherita Pizza", "Classic tomato, mozzarella, basil", "Main Course", 350.0, "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop"),
+                    createItem("Chicken Biryani", "Fragrant basmati rice with spiced chicken", "Main Course", 450.0, "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop"),
+                    createItem("Caesar Salad", "Fresh romaine, parmesan, croutons", "Salads", 280.0, "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop"),
+                    createItem("Chocolate Brownie", "Warm fudgy brownie with vanilla ice cream", "Desserts", 180.0, "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop"),
+                    createItem("French Fries", "Crispy golden fries", "Sides", 150.0, "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop"),
+                    createItem("Grilled Chicken", "Herb-marinated grilled chicken breast", "Main Course", 420.0, "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=300&fit=crop"),
+                    createItem("Vegetable Soup", "Fresh seasonal vegetables in broth", "Soups", 200.0, "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop"),
+                    createItem("Tiramisu", "Classic Italian dessert", "Desserts", 250.0, "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop"),
+                    createItem("Garlic Bread", "Toasted bread with garlic butter", "Sides", 120.0, "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=400&h=300&fit=crop"),
+                    createItem("Pasta Carbonara", "Creamy pasta with bacon and parmesan", "Main Course", 380.0, "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400&h=300&fit=crop"),
+                    createItem("Fresh Orange Juice", "Freshly squeezed orange juice", "Beverages", 100.0, "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=300&fit=crop"),
+                    createItem("Cappuccino", "Espresso with steamed milk foam", "Beverages", 150.0, "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop")
+            );
+
+            foodItemRepository.saveAll(items);
+            System.out.println("Seeding completed: Added " + items.size() + " food menu items.");
+        } else {
+            System.out.println("Food menu already exists. Skipping seeding.");
+        }
+    }
+
+    private FoodItem createItem(String name, String description, String category, Double price, String imageUrl) {
+        FoodItem item = new FoodItem();
+        item.setName(name);
+        item.setDescription(description);
+        item.setCategory(category);
+        item.setPrice(price);
+        item.setAvailable(true);
+        item.setImageUrl(imageUrl);
+        return item;
     }
 }
