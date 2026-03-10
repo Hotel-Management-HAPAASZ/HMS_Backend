@@ -142,12 +142,15 @@ public class BookingService {
     if (booking.getStatus() == BookingStatus.CANCELLED)
         throw new RuntimeException("Cancelled booking cannot be modified");
 
-    if (!booking.getCheckInDate().isAfter(LocalDate.now()))
+    if (booking.getStatus() == BookingStatus.PENDING)
+        throw new RuntimeException("Pending booking cannot be modified");
+
+    if (booking.getCheckInDate().isBefore(LocalDate.now()))
         throw new RuntimeException("Past bookings cannot be modified");
 
     // Validate dates
-    if (!request.getCheckIn().isAfter(LocalDate.now()))
-        throw new RuntimeException("Check-in must be future date");
+    if (request.getCheckIn().isBefore(LocalDate.now()))
+        throw new RuntimeException("Check-in must be today or a future date");
 
     if (!request.getCheckOut().isAfter(request.getCheckIn()))
         throw new RuntimeException("Invalid date range");
@@ -232,12 +235,7 @@ public class BookingService {
             .mapToDouble(room -> room.getPricePerNight() * days)
             .sum();
 
-    // Get last successful payment
-    Payment lastPayment = paymentRepository
-            .findTopByBooking_IdAndStatusOrderByIdDesc(bookingId, PaymentStatus.SUCCESS)
-            .orElseThrow(() -> new RuntimeException("Previous payment not found"));
-
-    double oldAmount = lastPayment.getAmount();
+    double oldAmount = booking.getAmount();
     double difference = newAmount - oldAmount;
 
     // Rebuild booking rooms
