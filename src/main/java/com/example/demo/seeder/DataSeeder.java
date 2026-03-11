@@ -123,18 +123,18 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Seeding food menu...");
 
             List<FoodItem> items = List.of(
-                    createItem("Margherita Pizza", "Classic tomato, mozzarella, basil", "Main Course", 350.0, "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop"),
-                    createItem("Chicken Biryani", "Fragrant basmati rice with spiced chicken", "Main Course", 450.0, "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop"),
-                    createItem("Caesar Salad", "Fresh romaine, parmesan, croutons", "Salads", 280.0, "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=300&fit=crop"),
-                    createItem("Chocolate Brownie", "Warm fudgy brownie with vanilla ice cream", "Desserts", 180.0, "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop"),
-                    createItem("French Fries", "Crispy golden fries", "Sides", 150.0, "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop"),
-                    createItem("Grilled Chicken", "Herb-marinated grilled chicken breast", "Main Course", 420.0, "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=300&fit=crop"),
-                    createItem("Vegetable Soup", "Fresh seasonal vegetables in broth", "Soups", 200.0, "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop"),
-                    createItem("Tiramisu", "Classic Italian dessert", "Desserts", 250.0, "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop"),
-                    createItem("Garlic Bread", "Toasted bread with garlic butter", "Sides", 120.0, "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=400&h=300&fit=crop"),
-                    createItem("Pasta Carbonara", "Creamy pasta with bacon and parmesan", "Main Course", 380.0, "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400&h=300&fit=crop"),
-                    createItem("Fresh Orange Juice", "Freshly squeezed orange juice", "Beverages", 100.0, "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=300&fit=crop"),
-                    createItem("Cappuccino", "Espresso with steamed milk foam", "Beverages", 150.0, "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&h=300&fit=crop")
+                    createItem("Margherita Pizza", "Classic tomato, mozzarella, basil", "Main Course", 350.0, "assets/food/pizza.png"),
+                    createItem("Chicken Biryani", "Fragrant basmati rice with spiced chicken", "Main Course", 450.0, "assets/food/biryani.png"),
+                    createItem("Caesar Salad", "Fresh romaine, parmesan, croutons", "Salads", 280.0, "assets/food/caesar.png"),
+                    createItem("Chocolate Brownie", "Warm fudgy brownie with vanilla ice cream", "Desserts", 180.0, "assets/food/brownie.png"),
+                    createItem("French Fries", "Crispy golden fries", "Sides", 150.0, "assets/food/fries.png"),
+                    createItem("Grilled Chicken", "Herb-marinated grilled chicken breast", "Main Course", 420.0, "assets/food/chicken.png"),
+                    createItem("Vegetable Soup", "Fresh seasonal vegetables in broth", "Soups", 200.0, "assets/food/soup.png"),
+                    createItem("Tiramisu", "Classic Italian dessert", "Desserts", 250.0, "assets/food/tiramisu.png"),
+                    createItem("Garlic Bread", "Toasted bread with garlic butter", "Sides", 120.0, "assets/food/garlic_bread.png"),
+                    createItem("Pasta Carbonara", "Creamy pasta with bacon and parmesan", "Main Course", 380.0, "assets/food/carbonara.png"),
+                    createItem("Fresh Orange Juice", "Freshly squeezed orange juice", "Beverages", 100.0, "assets/food/orange_juice.png"),
+                    createItem("Cappuccino", "Espresso with steamed milk foam", "Beverages", 150.0, "assets/food/cappuccino.png")
             );
 
             foodItemRepository.saveAll(items);

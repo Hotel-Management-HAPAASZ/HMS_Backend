@@ -31,6 +31,15 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Recovery logic: Fix any users corrupted by the update bug (null roles)
+        userRepository.findAll().stream()
+            .filter(u -> u.getRole() == null)
+            .forEach(u -> {
+                log.warn("[recovery] User {} has null role. Defaulting to CUSTOMER.", u.getEmail());
+                u.setRole(UserRole.CUSTOMER);
+                userRepository.save(u);
+            });
+
         seedUser("Admin User",    "admin@hotel.com",    "Admin@123",    "9000000001", UserRole.ADMIN,    null,                   AccountStatus.ACTIVE);
         seedUser("Staff Bill",    "staff@hotel.com",    "Staff@123",    "9000000002", UserRole.STAFF,    Expertise.BILL,         AccountStatus.ACTIVE);
         seedUser("Staff Home",    "staff2@hotel.com",   "Staff@123",    "9000000003", UserRole.STAFF,    Expertise.HOMESECRVICE, AccountStatus.ACTIVE);

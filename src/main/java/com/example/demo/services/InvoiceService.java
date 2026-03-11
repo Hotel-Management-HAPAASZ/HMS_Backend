@@ -20,6 +20,7 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public InvoiceResponse getInvoiceByBookingId(Long bookingId) {
 
         Invoice invoice = invoiceRepository.findByBooking_Id(bookingId)
@@ -100,13 +101,18 @@ public class InvoiceService {
     public void createInvoice(Payment payment) {
         Booking booking = payment.getBooking();
 
+        invoiceRepository.findByBooking_Id(booking.getId()).ifPresent(existingInvoice -> {
+            invoiceRepository.delete(existingInvoice);
+            invoiceRepository.flush();
+        });
+
         Invoice invoice = new Invoice();
         invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8));
         invoice.setBooking(booking);
         invoice.setPayment(payment);
-        invoice.setBaseAmount(payment.getAmount());
+        invoice.setBaseAmount(booking.getAmount());
         invoice.setTaxAmount(0.0);
-        invoice.setTotalAmount(payment.getAmount());
+        invoice.setTotalAmount(booking.getAmount());
         invoice.setGeneratedAt(LocalDateTime.now());
 
         invoiceRepository.save(invoice);

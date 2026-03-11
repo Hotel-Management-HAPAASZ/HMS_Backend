@@ -25,7 +25,7 @@ public class Booking {
     @JoinColumn(name="user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingRoom> bookingRooms;
 
     @Column(nullable = false)
@@ -44,7 +44,7 @@ public class Booking {
     private Integer numberOfGuests;
 
     @Column(nullable = false)
-    private Double amount; 
+    private Double amount;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
@@ -52,7 +52,7 @@ public class Booking {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    
+
  @PrePersist
     void onCreate() {
         if (checkOutDate.isBefore(checkInDate)) {

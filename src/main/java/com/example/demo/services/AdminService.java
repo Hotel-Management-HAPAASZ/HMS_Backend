@@ -62,24 +62,34 @@ public class AdminService {
 
     // Dashboard
     public Object getDashboardData() {
+        long totalRooms = roomRepository.count();
+        long activeRooms = roomRepository.countByStatus(RoomStatus.AVAILABLE);
+        long totalBookings = bookingRepository.count();
+        long openComplaints = complaintRepository.countByStatus(ComplaintStatus.OPEN);
+        long totalCustomers = userRepository.countByRole(UserRole.CUSTOMER);
+        long totalStaff = userRepository.countByRole(UserRole.STAFF) + userRepository.countByRole(UserRole.FOOD_STAFF);
+
+        double occupancyRate = totalRooms > 0 ? (double) (totalRooms - activeRooms) / totalRooms * 100 : 0;
+
+        // Revenue calculation (simple sum of all paid bookings)
+        Double revenue = bookingRepository.findAll().stream()
+                .filter(b -> b.getStatus() == BookingStatus.PAID || b.getStatus() == BookingStatus.CONFIRMED)
+                .mapToDouble(b -> b.getTotalAmount())
+                .sum();
 
         LocalDate today = LocalDate.now();
-
-        LocalDate startOfMonth = today.withDayOfMonth(1);
-        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-
-        long todayBookings = bookingRepository.countByCheckInDate(today);
-
-        long monthlyBookings = bookingRepository.countByCheckInDateBetween(
-                startOfMonth,
-                endOfMonth);
-
-        long availableRooms = roomRepository.countByStatus(RoomStatus.AVAILABLE);
+        long todayCheckins = bookingRepository.countByCheckInDate(today);
 
         return new Object() {
-            public final long today = todayBookings;
-            public final long monthly = monthlyBookings;
-            public final long available = availableRooms;
+            public final long totalRooms = totalRooms;
+            public final long activeRooms = activeRooms;
+            public final long totalBookings = totalBookings;
+            public final long openComplaints = openComplaints;
+            public final long totalCustomers = totalCustomers;
+            public final long totalStaff = totalStaff;
+            public final double occupancyRate = Math.round(occupancyRate * 10) / 10.0;
+            public final double revenue = revenue;
+            public final long todayCheckins = todayCheckins;
         };
     }
 
@@ -438,7 +448,12 @@ public class AdminService {
         user.setUserName(request.getUserName());
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhone());
-        user.setRole(request.getRole());
+
+        // FIX: Only update role if provided, otherwise keep existing role to avoid login crashes
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+
         user.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(user);

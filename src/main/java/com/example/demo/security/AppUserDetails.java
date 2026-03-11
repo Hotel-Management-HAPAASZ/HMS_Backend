@@ -20,7 +20,9 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        
+        if (user.getRole() == null) {
+            return List.of(); // Anonymous/Guest if role is missing
+        }
         return List.of(new SimpleGrantedAuthority(user.getRole().name()));
     }
 

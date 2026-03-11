@@ -434,6 +434,15 @@ public class BookingService {
             throw new RuntimeException("Checked-in booking cannot be cancelled");
         }
 
+        System.out.println("DEBUG SET STATUS - newStatus: " + newStatus);
+        System.out.println("DEBUG SET STATUS - now: " + LocalDate.now());
+        System.out.println("DEBUG SET STATUS - checkInDate: " + booking.getCheckInDate());
+        System.out.println("DEBUG SET STATUS - isBefore: " + LocalDate.now().isBefore(booking.getCheckInDate()));
+
+        if (newStatus == BookingStatus.CHECKED_IN && LocalDate.now().isBefore(booking.getCheckInDate())) {
+            throw new RuntimeException("Cannot check-in before the check-in date");
+        }
+
         booking.setStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
@@ -480,9 +489,11 @@ public class BookingService {
             if (b.getBookingRooms() != null) {
                 dto.setRoomTypes(b.getBookingRooms().stream()
                     .map(br -> br.getRoom().getRoomType())
+                    .distinct()
                     .toList());
                 dto.setRoomNumbers(b.getBookingRooms().stream()
                     .map(br -> br.getRoom().getRoomNumber())
+                    .distinct()
                     .toList());
             }
             return dto;

@@ -17,6 +17,8 @@ public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpe
 
     List<Booking> findByStatus(BookingStatus status);
 
+    List<Booking> findByStatusAndCheckOutDateBefore(BookingStatus status, LocalDate date);
+
     List<Booking> findByCheckInDateBetween(LocalDate startDate, LocalDate endDate);
 
     boolean existsByBookingRooms_Room_IdAndCheckInDateLessThanEqualAndCheckOutDateGreaterThanEqual(
@@ -77,7 +79,7 @@ public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpe
         JOIN FETCH b.bookingRooms br
         JOIN FETCH br.room r
         WHERE b.user.id = :userId
-          AND b.status = com.example.demo.enums.BookingStatus.CHECKED_IN
+          AND b.status IN (com.example.demo.enums.BookingStatus.CHECKED_IN, com.example.demo.enums.BookingStatus.CONFIRMED)
           AND b.checkInDate <= :today
           AND b.checkOutDate >= :today
         ORDER BY b.checkInDate DESC
@@ -93,7 +95,7 @@ public interface BookingRepository extends BaseRepository<Booking, Long> ,JpaSpe
         JOIN FETCH b.bookingRooms br
         JOIN FETCH br.room r
         WHERE b.user.id = :userId
-          AND b.status = com.example.demo.enums.BookingStatus.CHECKED_IN
+          AND b.status IN (com.example.demo.enums.BookingStatus.CHECKED_IN, com.example.demo.enums.BookingStatus.CONFIRMED)
           AND b.checkInDate <= :today
           AND b.checkOutDate >= :today
         ORDER BY b.checkInDate DESC

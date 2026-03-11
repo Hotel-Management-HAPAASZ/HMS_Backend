@@ -103,6 +103,10 @@ Map.of(
             // if (user.getStatus() != AccountStatus.ACTIVE) { ... }
 
             // 3) Create JWT with useful claims
+            if (user.getRole() == null) {
+                return ResponseEntity.status(500).body("Internal configuration error: user has no role assigned. Please contact support.");
+            }
+
             String token = jwtService.generateToken(
                     user.getEmail(),
                     Map.of("role", user.getRole().name(), "uid", user.getId()));

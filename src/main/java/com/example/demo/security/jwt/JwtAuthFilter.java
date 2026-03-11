@@ -49,7 +49,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception ex) {
-            // Optionally write 401 JSON response
+            // Log the detailed failure for debugging 401/403 issues
+            System.err.println("JWT Authentication Failed for URL: " + request.getRequestURI());
+            System.err.println("Cause: " + ex.getMessage());
+            ex.printStackTrace();
         }
 
         chain.doFilter(request, response);
